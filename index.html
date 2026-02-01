@@ -7,21 +7,33 @@
   <style>
     body {
       background: #ffd6e7;
-      height: 100vh;
       margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Centering container */
+    .screen {
+      min-height: 100vh;
+      width: 100%;
       display: flex;
       justify-content: center;
       align-items: center;
-      font-family: "Segoe UI", sans-serif;
+      padding: 24px;
+      box-sizing: border-box;
+      position: relative;
+      z-index: 2;
     }
 
+    /* Initial card */
     .card {
       background: white;
       padding: 40px;
       border-radius: 25px;
       text-align: center;
-      width: 360px;
-      position: relative;
+      width: 100%;
+      max-width: 360px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     }
 
@@ -52,29 +64,57 @@
 
     /* Letter */
     .letter {
-      background:white;
-      max-width:600px;
-      width:100%;
-      padding:40px;
-      border-radius:25px;
-      box-shadow:0 10px 30px rgba(0,0,0,0.1);
-      line-height:1.7;
+      background: white;
+      width: 100%;
+      max-width: 600px;
+      padding: 40px;
+      border-radius: 25px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      line-height: 1.7;
+      position: relative;
+      z-index: 2;
     }
 
     .letter h2 {
-      text-align:center;
+      text-align: center;
     }
 
     .sign {
-      text-align:right;
-      margin-top:30px;
+      text-align: right;
+      margin-top: 30px;
+    }
+
+    /* Music button */
+    .music-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+      z-index: 3;
+      display: none;
+    }
+
+    /* Confetti canvas */
+    #confetti {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 1;
     }
 
     /* Mobile */
     @media (max-width: 480px) {
       .letter {
-        padding:25px;
-        font-size:15px;
+        padding: 24px;
+        font-size: 15px;
       }
     }
   </style>
@@ -82,149 +122,132 @@
 
 <body>
 
-  <!-- Background music -->
-  <audio id="bgMusic" src="love.mp3" loop></audio>
+  <!-- SINGLE audio element -->
+  <audio id="bgMusic" src="love.mp3" preload="auto"></audio>
 
-  <!-- Valentine card -->
-  <div class="card">
-    <h2>🐣💖</h2>
-    <h3>Olumurewa, will you be my Valentine?</h3>
+  <!-- FIRST SCREEN -->
+  <div class="screen" id="cardScreen">
+    <div class="card">
+      <h2>🐣💖</h2>
+      <h3>Olumurewa, will you be my Valentine?</h3>
 
-    <button class="yes" onclick="yesClicked()">Yes</button>
-    <button class="no" id="noBtn">No</button>
+      <button class="yes" id="yesBtn">Yes</button>
+      <button class="no" id="noBtn">No</button>
 
-    <div class="hint" id="hint"></div>
+      <div class="hint" id="hint"></div>
+    </div>
   </div>
 
-  <!-- Confetti canvas -->
+  <!-- LETTER SCREEN -->
+  <div class="screen" id="letterScreen" style="display:none;">
+    <div class="letter">
+      <h2>💖 Dear Olumurewa,</h2>
+
+      <p>Hey my love,</p>
+
+      <p>
+        I just want you to know how happy you made me by saying yes.
+        Choosing you as my Valentine was easy, but having you choose me
+        back means everything.
+      </p>
+
+      <p>
+        You bring so much light, peace, and happiness into my life,
+        and I’m grateful for you every single day.
+      </p>
+
+      <p>
+        I can’t wait to create beautiful memories with you — not just on
+        Valentine’s Day, but always. ❤️
+      </p>
+
+      <div style="margin-top:30px; text-align:center;">
+        <img src="photo.jpg"
+          style="width:100%;max-width:360px;border-radius:18px;
+          box-shadow:0 8px 20px rgba(0,0,0,0.15);" />
+      </div>
+
+      <p class="sign">
+        💕 Always,<br><strong>Maxwell</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- MUSIC BUTTON -->
+  <button class="music-btn" id="musicBtn">🎵 Tap to play</button>
+
+  <!-- CONFETTI -->
   <canvas id="confetti"></canvas>
 
   <script>
-    const name = "Olumurewa";
-
     const noBtn = document.getElementById("noBtn");
     const hint = document.getElementById("hint");
+    const yesBtn = document.getElementById("yesBtn");
+    const cardScreen = document.getElementById("cardScreen");
+    const letterScreen = document.getElementById("letterScreen");
+    const music = document.getElementById("bgMusic");
+    const musicBtn = document.getElementById("musicBtn");
 
-    // Make "No" dodge
+    // No button dodge
     noBtn.addEventListener("mouseover", () => {
-      const x = Math.random() * 220 - 110;
-      const y = Math.random() * 120 - 60;
+      const x = Math.random() * 200 - 100;
+      const y = Math.random() * 100 - 50;
       noBtn.style.transform = `translate(${x}px, ${y}px)`;
       hint.textContent = `"No" seems a bit shy 👀`;
     });
 
-    // Fade in music
-    function fadeInMusic(audio) {
-      audio.volume = 0;
-      audio.play();
-      let vol = 0;
-      const fade = setInterval(() => {
-        if (vol < 0.6) {
-          vol += 0.02;
-          audio.volume = vol;
-        } else {
-          clearInterval(fade);
-        }
-      }, 200);
-    }
-
-    // Toggle music
-    function toggleMusic() {
-      const music = document.getElementById("bgMusic");
-      music.paused ? music.play() : music.pause();
-    }
-
-    // YES clicked
-    function yesClicked() {
-      const music = document.getElementById("bgMusic");
-      fadeInMusic(music);
-
-      document.body.innerHTML = `
-        <audio id="bgMusic" src="love.mp3" loop autoplay></audio>
-
-        <button onclick="toggleMusic()" style="
-          position:fixed;
-          top:20px;
-          right:20px;
-          border:none;
-          background:white;
-          padding:10px 14px;
-          border-radius:50%;
-          font-size:18px;
-          cursor:pointer;
-          box-shadow:0 5px 15px rgba(0,0,0,0.15);
-        ">⏸</button>
-
-        <div style="
-          background:#ffd6e7;
-          min-height:100vh;
-          display:flex;
-          justify-content:center;
-          align-items:center;
-          padding:20px;
-        ">
-          <div class="letter">
-            <h2>💖 Dear ${name},</h2>
-
-            <p>Hey my love,</p>
-
-            <p>
-              I just want you to know how happy you made me by saying yes.
-              Choosing you as my Valentine was easy, but having you choose me
-              back means everything.
-            </p>
-
-            <p>
-              You bring so much light, peace, and happiness into my life, and
-              I’m grateful for you every single day.
-            </p>
-
-            <p>
-              I can’t wait to create beautiful memories with you — not just on
-              Valentine’s Day, but always. ❤️
-            </p>
-
-            <p class="sign">
-              💕 Always,<br>
-              <strong>Me</strong>
-            </p>
-          </div>
-        </div>
-
-        <canvas id="confetti"></canvas>
-      `;
-
+    // Yes click
+    yesBtn.addEventListener("click", () => {
+      cardScreen.style.display = "none";
+      letterScreen.style.display = "flex";
+      musicBtn.style.display = "block";
       startConfetti();
-    }
+    });
+
+    // Music (iOS safe)
+    musicBtn.onclick = () => {
+      if (music.paused) {
+        music.play();
+        music.volume = 0.6;
+        musicBtn.textContent = "⏸ Pause music";
+      } else {
+        music.pause();
+        musicBtn.textContent = "🎵 Tap to play";
+      }
+    };
 
     // Confetti
     function startConfetti() {
       const canvas = document.getElementById("confetti");
       const ctx = canvas.getContext("2d");
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const dpr = window.devicePixelRatio || 1;
 
-      const pieces = Array.from({ length: 120 }).map(() => ({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        r: Math.random() * 6 + 4,
-        d: Math.random() * 10 + 5,
-        color: `hsl(${Math.random() * 360},100%,70%)`
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      ctx.scale(dpr, dpr);
+
+      const dots = Array.from({ length: 120 }).map(() => ({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        r: Math.random() * 5 + 3,
+        d: Math.random() * 3 + 2,
+        c: `hsl(${Math.random()*360},100%,70%)`
       }));
 
-      function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        pieces.forEach(p => {
+      (function draw() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        dots.forEach(p => {
           ctx.beginPath();
-          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-          ctx.fillStyle = p.color;
+          ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+          ctx.fillStyle=p.c;
           ctx.fill();
-          p.y += p.d * 0.3;
-          if (p.y > canvas.height) p.y = -10;
+          p.y += p.d;
+          if (p.y > window.innerHeight) p.y = -10;
         });
         requestAnimationFrame(draw);
-      }
-      draw();
+      })();
+
+      setTimeout(() => canvas.remove(), 8000);
     }
   </script>
 
